@@ -1,0 +1,148 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Banners {
+  banner_id    Int       @id @default(autoincrement())
+  movie_id     Int?
+  banner_image String?   @db.VarChar(255)
+  created_at   DateTime? @default(now()) @db.DateTime(0)
+  updated_at   DateTime? @default(now()) @db.DateTime(0)
+  Movies       Movies?   @relation(fields: [movie_id], references: [movie_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_banner_movie")
+
+  @@index([movie_id], map: "fk_banner_movie")
+}
+
+model Bookings {
+  user_id      Int
+  schedule_id  Int
+  seat_id      Int
+  booking_date DateTime? @db.Date
+  created_at   DateTime? @default(now()) @db.DateTime(0)
+  updated_at   DateTime? @default(now()) @db.DateTime(0)
+  is_booked    Boolean?  @default(false)
+  ticket_price Float?    @db.Float
+  Schedules    Schedules @relation(fields: [schedule_id], references: [schedule_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_booking_schedule")
+  Seats        Seats     @relation(fields: [seat_id], references: [seat_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_booking_seat")
+  users        users     @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_booking_user")
+
+  @@id([user_id, schedule_id, seat_id])
+  @@index([schedule_id], map: "fk_booking_schedule")
+  @@index([seat_id], map: "fk_booking_seat")
+}
+
+model CinemaClusters {
+  cluster_id      Int            @id @default(autoincrement())
+  cluster_name    String?        @db.VarChar(255)
+  cluster_address String?        @db.VarChar(255)
+  system_id       Int?
+  created_at      DateTime?      @default(now()) @db.DateTime(0)
+  updated_at      DateTime?      @default(now()) @db.DateTime(0)
+  CinemaSystems   CinemaSystems? @relation(fields: [system_id], references: [system_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cinema_system")
+  Cinemas         Cinemas[]
+
+  @@index([system_id], map: "fk_cinema_system")
+}
+
+model CinemaSystems {
+  system_id      Int              @id @default(autoincrement())
+  system_name    String?          @db.VarChar(255)
+  logo_url       String?          @db.VarChar(255)
+  created_at     DateTime?        @default(now()) @db.DateTime(0)
+  updated_at     DateTime?        @default(now()) @db.DateTime(0)
+  CinemaClusters CinemaClusters[]
+}
+
+model Cinemas {
+  cinema_id      Int             @id @default(autoincrement())
+  cinema_name    String?         @db.VarChar(255)
+  cluster_id     Int?
+  created_at     DateTime?       @default(now()) @db.DateTime(0)
+  updated_at     DateTime?       @default(now()) @db.DateTime(0)
+  max_seats      Int
+  CinemaClusters CinemaClusters? @relation(fields: [cluster_id], references: [cluster_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cluster")
+  Schedules      Schedules[]
+  Seats          Seats[]
+
+  @@index([cluster_id], map: "fk_cluster")
+}
+
+model Movies {
+  movie_id       Int         @id @default(autoincrement())
+  movie_name     String?     @db.VarChar(255)
+  movie_trailer  String?     @db.VarChar(255)
+  movie_image    String?     @db.VarChar(255)
+  description    String?     @db.VarChar(255)
+  release_date   DateTime?   @db.Date
+  rating         Float?      @db.Float
+  is_hot         Boolean?
+  is_showing     Boolean?
+  is_coming_soon Boolean?
+  created_at     DateTime?   @default(now()) @db.DateTime(0)
+  updated_at     DateTime?   @default(now()) @db.DateTime(0)
+  duration       Int?        @default(120)
+  Banners        Banners[]
+  Schedules      Schedules[]
+}
+
+model Schedules {
+  schedule_id   Int        @id @default(autoincrement())
+  cinema_id     Int?
+  movie_id      Int?
+  show_datetime DateTime?  @db.DateTime(0)
+  ticket_price  Int?
+  created_at    DateTime?  @default(now()) @db.DateTime(0)
+  updated_at    DateTime?  @default(now()) @db.DateTime(0)
+  Bookings      Bookings[]
+  Cinemas       Cinemas?   @relation(fields: [cinema_id], references: [cinema_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_schedule_cinema")
+  Movies        Movies?    @relation(fields: [movie_id], references: [movie_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_schedule_movie")
+  Seats         Seats[]
+
+  @@index([cinema_id], map: "fk_schedule_cinema")
+  @@index([movie_id], map: "fk_schedule_movie")
+}
+
+model Seats {
+  seat_id     Int        @id @default(autoincrement())
+  seat_name   String?    @db.VarChar(255)
+  seat_type   String?    @db.VarChar(255)
+  cinema_id   Int?
+  created_at  DateTime?  @default(now()) @db.DateTime(0)
+  updated_at  DateTime?  @default(now()) @db.DateTime(0)
+  schedule_id Int?
+  Bookings    Bookings[]
+  Cinemas     Cinemas?   @relation(fields: [cinema_id], references: [cinema_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_seat_cinema")
+  Schedules   Schedules? @relation(fields: [schedule_id], references: [schedule_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_seat_schedule")
+
+  @@index([cinema_id], map: "fk_seat_cinema")
+  @@index([schedule_id], map: "fk_seat_schedule")
+}
+
+model users {
+  user_id    Int         @id @default(autoincrement())
+  user_name  String      @db.VarChar(255)
+  email      String      @db.VarChar(255)
+  phone      String?     @db.VarChar(255)
+  pass_word  String?     @db.VarChar(255)
+  created_at DateTime?   @default(now()) @db.DateTime(0)
+  updated_at DateTime?   @default(now()) @db.DateTime(0)
+  role_id    Int?
+  account    String      @db.VarChar(255)
+  Bookings   Bookings[]
+  user_roles user_roles? @relation(fields: [role_id], references: [role_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_user_role")
+
+  @@index([role_id], map: "fk_user_role")
+}
+
+model user_roles {
+  role_id    Int       @id @default(autoincrement())
+  role_name  String    @db.VarChar(255)
+  created_at DateTime? @default(now()) @db.DateTime(0)
+  updated_at DateTime? @default(now()) @db.DateTime(0)
+  users      users[]
+}
