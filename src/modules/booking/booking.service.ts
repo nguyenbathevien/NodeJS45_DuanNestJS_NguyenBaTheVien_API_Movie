@@ -8,7 +8,6 @@
     export class BookingService {
         constructor(private prisma: PrismaService) {}
 
-
         async getListBookingRoom(idSchedule: string, idCinema: string) {
             
                 const scheduleId = +idSchedule;
@@ -171,6 +170,40 @@
             }
           }
           
+        async cancelBooking(req: Request, schedule_id: number, seat_id: number) {
+            if (!req.user) {
+                throw new UnauthorizedException("Bạn cần đăng nhập để hủy đặt vé");
+            }
+        
+            const userId = req.user["user_id"];
+        
+            const existingBooking = await this.prisma.bookings.findFirst({
+                where: {
+                    user_id: userId,
+                    schedule_id,
+                    seat_id,
+                },
+            });
+        
+            if (!existingBooking) {
+                throw new BadRequestException("Không tìm thấy thông tin đặt vé hoặc vé này không thuộc về bạn");
+            }
+        
+            try {
+              return  await this.prisma.bookings.delete({
+                    where: {
+                        user_id_schedule_id_seat_id: {
+                            user_id: userId,
+                            schedule_id,
+                            seat_id,
+                        },
+                    },
+                });
+               
+            } catch (error) {
+                throw new InternalServerErrorException("Có lỗi xảy ra khi hủy đặt vé", error);
+            }
+        }
           
         
     }

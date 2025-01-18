@@ -18,8 +18,8 @@ async function bootstrap() {
   app.useGlobalGuards(new JwtAuthGuard(reflector))
   
   const config = new DocumentBuilder()
-  .setTitle('Cats example')
-  .setDescription('The cats API description')
+  .setTitle('API_MOVIE')
+  .setDescription('NODE45_API-MOVIE_CAPSTONE')
   .setVersion('1.0')
   .addBearerAuth({type:'http',scheme:'bearer',bearerFormat:'JWT'},'access-token')
   .build();
